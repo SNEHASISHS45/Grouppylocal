@@ -66,13 +66,13 @@ function Home({ user }) {
       collection(db, 'posts'), 
       orderBy('createdAt', 'desc')
     );
-    const unsubscribe = onSnapshot(q, 
-      (querySnapshot) => {/* success */},
-      (error) => {
-        console.error('Firestore error:', error);
-        // Add error state handling here
-      }
-    );
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const postsData = [];
+      querySnapshot.forEach((doc) => {
+        postsData.push({ id: doc.id, ...doc.data() });
+      });
+      setPosts(postsData);
+    });
     return unsubscribe;
   }, []);
 
@@ -588,12 +588,6 @@ const fetchMorePhotos = () => {
 
 
 
-// Add this state for online users (replace with real data as needed)
-const [onlineUsers, setOnlineUsers] = useState([
-  { uid: '1', displayName: 'Alice', photoURL: '' },
-  { uid: '2', displayName: 'Bob', photoURL: '' },
-  { uid: '3', displayName: 'Charlie', photoURL: '' }
-]);
 // Add share button to posts:
 <div className="flex gap-4 mt-3">
   <button 

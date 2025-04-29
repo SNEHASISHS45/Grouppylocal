@@ -3,25 +3,23 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: "grouppy-37204",
-  storageBucket: "grouppy-37204.firebasestorage.app",
-  messagingSenderId: "1070140184180",
-  appId: "1:1070140184180:web:196435fd3885bcfc832321",
-  measurementId: "G-3B57BLF0ZW"
+    apiKey: "AIzaSyBfeq2fFbi_SpTWSTiqrEJ2iIqeVFC63F4",
+    authDomain: "grouppy-37204.firebaseapp.com",
+    projectId: "grouppy-37204",
+    storageBucket: "grouppy-37204.firebasestorage.app",
+    messagingSenderId: "1070140184180",
+    appId: "1:1070140184180:web:196435fd3885bcfc832321",
+    measurementId: "G-3B57BLF0ZW"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export auth and db instances
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Remove Cloudinary credentials from client-side code
-// These should only be used server-side
+// Cloudinary configuration (add this)
 export const cloudinaryConfig = {
-  cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+cloud_name: 'dzn369qpk',
+api_key: '274266766631951',
+api_secret: 'ThwRkNdXKQ2LKnQAAukKgmo510g',
 };
