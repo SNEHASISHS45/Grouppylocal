@@ -9,6 +9,7 @@
     "@cloudinary/url-gen": "^1.21.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.0.2",
+    "@mui/material": "^7.0.2",
     "cloudinary": "^2.6.0",
     "firebase": "^11.6.1",
     "framer-motion": "^12.9.2",
