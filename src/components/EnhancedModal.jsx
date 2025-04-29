@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react'; // Changed import
 
 export default function EnhancedModal({ isOpen, onClose, selectedPost, children }) {
   if (!isOpen) return null;
+
+  // Added actual useState usage example
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
