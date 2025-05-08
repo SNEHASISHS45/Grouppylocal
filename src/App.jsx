@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase/firebase';
-import { lazy, Suspense } from 'react';
+import Login from './pages/Login';
+import Profile from './components/Profile';
 import ResponsiveSidebar from './components/ResponsiveSidebar';
 import NavigationMenu from './components/NavigationMenu';
 import EnhancedPost from './components/EnhancedPost';
 import PhotoFeed from './components/PhotoFeed';
+import CreatePost from './pages/CreatePost'; // Add this import
 import { 
   collection, 
   addDoc,
@@ -19,7 +21,7 @@ import {
   arrayRemove,
   getDoc,
   getDocs,
-  orderBy
+  orderBy // <-- keep this one
 } from "firebase/firestore";
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -113,13 +115,6 @@ function Home({ user, searchQuery, setSearchQuery }) {
   );
 }
 
-// Lazy load components
-const Login = lazy(() => import('./pages/Login'));
-const Profile = lazy(() => import('./components/Profile'));
-const CreatePost = lazy(() => import('./pages/CreatePost'));
-const Management = lazy(() => import('./pages/Management'));
-const BadgeManager = lazy(() => import('./components/BadgeManager'));
-
 function App() {
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,12 +140,11 @@ function App() {
   return (
     <Router>
       <NavigationMenu user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route
-            path="/login"
-            element={!user ? <Login /> : <Navigate to="/" replace />}
-          />
+      <Routes>
+        <Route
+          path="/login"
+          element={!user ? <Login /> : <Navigate to="/" replace />}
+        />
         <Route
           path="/"
           element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
