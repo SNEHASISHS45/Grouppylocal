@@ -6,7 +6,7 @@ function SearchResults({ users }) {
       {users.map(user => (
         <li key={user.id}>
           <Link to={`/profile/${user.id}`}>
-            <img src={user.photoURL} alt={user.displayName} />
+            <img src={user.photoURL} alt={user.displayName + " profile photo"} />
             <span>{user.displayName}</span>
             {user.badge && (
               <span className="ml-2 text-xl" title="User Badge">
