@@ -4,9 +4,44 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase/firebase';
 import { 
   collection, 
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
   getDoc,
   getDocs,
-  doc 
+  orderBy
+} from "firebase/firestore";
+import { db } from './firebase/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import ShareIcon from '@mui/icons-material/Share';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import BadgeManager from './components/BadgeManager';
+import Management from './pages/Management';
+import EnhancedModal from './components/EnhancedModal';
+import NavigationMenu from './components/NavigationMenu';
+import ResponsiveSidebar from './components/ResponsiveSidebar';
+import EnhancedPost from './components/EnhancedPost';
+import PhotoFeed from './components/PhotoFeed';
+import { 
+  collection, 
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+  getDocs,
+  orderBy
 } from "firebase/firestore";
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
