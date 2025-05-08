@@ -4,6 +4,11 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase/firebase';
 import Login from './pages/Login';
 import Profile from './components/Profile';
+import ResponsiveSidebar from './components/ResponsiveSidebar';
+import NavigationMenu from './components/NavigationMenu';
+import EnhancedPost from './components/EnhancedPost';
+import PhotoFeed from './components/PhotoFeed';
+import CreatePost from './pages/CreatePost'; // Add this import
 import { 
   collection, 
   addDoc,
@@ -14,15 +19,28 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
-  getDoc
+  getDoc,
+  getDocs,
+  orderBy // <-- keep this one
 } from "firebase/firestore";
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { orderBy } from "firebase/firestore";
+// REMOVE this duplicate import:
+// import { orderBy } from "firebase/firestore";
 import ShareIcon from '@mui/icons-material/Share';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import { useRef } from 'react';
+import { Fragment } from 'react';
+import BadgeManager from './components/BadgeManager'; // Add this line
+import Management from './pages/Management';
+import EnhancedModal from './components/EnhancedModal';
+import { FaEllipsisH, FaHeart, FaComment, FaShare, FaBookmark } from 'react-icons/fa';
 
-function Home({ user }) {
+// Remove the duplicate PhotoFeed component definition here
+
+function Home({ user, searchQuery, setSearchQuery }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [groups, setGroups] = useState([]);
@@ -31,521 +49,86 @@ function Home({ user }) {
   const [postText, setPostText] = useState('');
   const [postImage, setPostImage] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [commentText, setCommentText] = useState('');
-  const [showProfile, setShowProfile] = useState(false); // <-- Add this line
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [feedFilter, setFeedFilter] = useState('all');
+  const lastScrollY = useRef(0);
+  const [openedPost, setOpenedPost] = useState(null);
 
-  // Add these state definitions to the existing Home component
-  const [events, setEvents] = useState([
-    { title: 'Birthday Party', date: '2023-12-15' },
-    { title: 'Team Meeting', date: '2023-12-20' }
-  ]);
-  
-  const [specialMoments, setSpecialMoments] = useState([
-    { title: 'Graduation', date: '2023-05-10', desc: 'College graduation day' },
-    { title: 'First Job', date: '2023-06-01', desc: 'Started first professional job' }
-  ]);
-
-  const [groupMemories, setGroupMemories] = useState([
-    'Summer Trip 2023',
-    'New Year Celebration'
-  ]);
-
-  const [sharedMoments, setSharedMoments] = useState([
-    'Beach Vacation',
-    'Mountain Hike'
-  ]);
-
-  const [sharedExperiences, setSharedExperiences] = useState([
-    'Concert Night',
-    'Food Festival'
-  ]);
-  // Fetch posts from Firestore
   useEffect(() => {
-    const q = query(
-      collection(db, 'posts'), 
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const postsData = [];
-      querySnapshot.forEach((doc) => {
-        postsData.push({ id: doc.id, ...doc.data() });
-      });
-      setPosts(postsData);
-    });
-    return unsubscribe;
+    // Fetch posts from Firestore
+    const fetchPosts = async () => {
+      const postsSnap = await getDocs(collection(db, "posts"));
+      const postsArr = postsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(postsArr);
+      setFilteredPosts(postsArr); // Initially, filteredPosts is the same as posts
+    };
+    fetchPosts();
   }, []);
 
-  // Handle image selection
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setPostImage(e.target.files[0]);
-    }
-  };
-
-  // Upload image to Cloudinary and create post
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareError, setShareError] = useState(null);
-
-  const handleShare = async () => {
-    setIsSharing(true);
-    setShareError(null);
-    try {
-      let imageUrl = '';
-      if (postImage) {
-        const formData = new FormData();
-        formData.append('file', postImage);
-        formData.append('upload_preset', 'ml_default'); // Update with actual preset
-        
-        // Update Cloudinary URL with your actual cloud name
-        const res = await fetch('https://api.cloudinary.com/v1_1/dzn369qpk/image/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!res.ok) throw new Error('Image upload failed - check Cloudinary settings');
-        const data = await res.json();
-        imageUrl = data.secure_url;
-      }
-
-      // Allow image-only posts
-      if (!postText && !imageUrl) {
-        throw new Error('Cannot share empty post');
-      }
-  
-      await addDoc(collection(db, 'posts'), {
-        text: postText,
-        image: imageUrl,
-        user: {
-          uid: user.uid,
-          displayName: user.displayName,
-          photoURL: user.photoURL,
-        },
-        createdAt: new Date(),
-      });
-      
-      setPostText('');
-      setPostImage(null);
-      
-    } catch (error) {
-      console.error('Share error:', error);
-      setShareError('Failed to share post. Please try again.');
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  // Add this handleAddComment function inside the Home component
-  const handleAddComment = async (postId) => {
-    if (!commentText.trim()) return;
-  
-    try {
-      const postRef = doc(db, 'posts', postId);
-      const newComment = {
-        user: user.displayName,
-        photoURL: user.photoURL,
-        text: commentText,
-        timestamp: new Date()
-      };
-      await updateDoc(postRef, {
-        comments: arrayUnion(newComment)
-      });
-      setCommentText('');
-  
-      // Optimistically update selectedPost if it's open
-      if (selectedPost && selectedPost.id === postId) {
-        setSelectedPost({
-          ...selectedPost,
-          comments: selectedPost.comments
-            ? [...selectedPost.comments, newComment]
-            : [newComment]
-        });
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
-
-  // Update the existing handleLike function with real-time refresh
-  // Update handleLike with optimistic updates
-  const handleLike = async (postId) => {
-    try {
-      const postRef = doc(db, 'posts', postId);
-      const postDoc = await getDoc(postRef);
-  
-      if (postDoc.exists()) {
-        const currentLikes = postDoc.data().likes || [];
-        const newLikes = currentLikes.includes(user.uid)
-          ? arrayRemove(user.uid)
-          : arrayUnion(user.uid);
-  
-        // Optimistic update
-        setPosts(posts.map(post => 
-          post.id === postId ? {
-            ...post,
-            likes: currentLikes.includes(user.uid)
-              ? currentLikes.filter(uid => uid !== user.uid)
-              : [...currentLikes, user.uid]
-          } : post
-        ));
-  
-        // Also update selectedPost if it's the same post
-        if (selectedPost && selectedPost.id === postId) {
-          setSelectedPost({
-            ...selectedPost,
-            likes: currentLikes.includes(user.uid)
-              ? currentLikes.filter(uid => uid !== user.uid)
-              : [...currentLikes, user.uid]
-          });
-        }
-  
-        await updateDoc(postRef, { likes: newLikes });
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      // Rollback on error
-      setPosts(posts);
-    }
-  };
-
-  // Add this logout handler inside Home
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      window.location.href = "/login"; // Or use navigate("/login") if you have access to navigate
-    } catch (error) {
-      alert("Logout failed");
-    }
-  };
-
+  function getFilteredFeed() {
+    // Use filteredPosts so search and filters work
+    return filteredPosts;
+  }
+  console.log(posts);
   return (
-    <div className="min-h-screen bg-[#18191A] text-gray-100 flex font-sans">
-      {/* Error message display */}
-      {shareError && (
-        <p className="text-red-500 text-sm mt-2">{shareError}</p>
-      )}
-      {/* Left Sidebar */}
-      <aside className="w-64 bg-[#23272A] flex flex-col py-8 px-6 min-h-screen border-r border-gray-800">
-        <h1 className="text-3xl font-extrabold text-white mb-10 tracking-wide">Discove</h1>
-        <nav className="flex-1">
-          <ul className="space-y-4 text-lg font-semibold">
-            <li><a href="#" className="hover:text-indigo-400 flex items-center gap-2" onClick={() => setShowProfile(false)}>
-              🏠 Home
-            </a>
-          </li>
-          <li><a href="#" className="hover:text-indigo-400 flex items-center gap-2">🔍 Search</a></li>
-          <li><a href="#" className="hover:text-indigo-400 flex items-center gap-2">🖼 My</a></li>
-          <li><a href="#" className="hover:text-indigo-400 flex items-center gap-2">➕ Create</a></li>
-          <li><a href="#" className="hover:text-indigo-400 flex items-center gap-2">⭐ Favorite</a></li>
-          <li>
-            <a href="#" className="hover:text-indigo-400 flex items-center gap-2" onClick={() => setShowProfile(true)}>
-              👤 Profile
-            </a>
-          </li>
-          </ul>
-        </nav>
-        <div className="mt-10 space-y-2 text-md">
-          <a href="#" className="hover:text-indigo-400 flex items-center gap-2">⚙️ Settings</a>
-          <a href="#" className="hover:text-indigo-400 flex items-center gap-2" onClick={handleLogout}>🚪 Log out</a>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-gradient-to-br from-[#18191a] to-[#232526] text-white">
+      <div className="flex">
+        <ResponsiveSidebar user={user} />
+        <div className="flex-1 ml-0 md:ml-20 mt-16">
+          {/* Use the imported PhotoFeed component */}
+          <PhotoFeed posts={getFilteredFeed()} onPhotoClick={setOpenedPost} />
 
-      {/* Main Feed - Instagram-style Gallery */}
-      <main className="flex-1 flex flex-col items-center px-4 py-8 bg-[#18191A] min-h-screen">
-        {showProfile ? (
-          <Profile user={user} />
-        ) : (
-          <>
-            {/* Post Creation Bar */}
-            <div className="w-full max-w-6xl mx-auto px-4 mb-6">
-              <div className="bg-[#242526] rounded-lg p-4 shadow-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                      {user.displayName?.charAt(0) || "U"}
-                    </div>
-                  )}
-                  <div className="text-white font-medium">{user.displayName}</div>
-                </div>
-                
-                <textarea
-                  placeholder="Share a caption for your photo..."
-                  className="w-full bg-[#3A3B3C] rounded-lg p-3 text-white placeholder-gray-400 outline-none resize-none mb-3"
-                  value={postText}
-                  onChange={e => setPostText(e.target.value)}
-                  rows="2"
-                />
-                
-                {postImage && (
-                  <div className="relative mb-3">
-                    <img 
-                      src={URL.createObjectURL(postImage)} 
-                      alt="Preview" 
-                      className="w-full max-h-60 object-contain rounded-lg"
-                    />
-                    <button 
-                      className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 text-white"
-                      onClick={() => setPostImage(null)}
-                    />
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label 
-                      htmlFor="image-upload" 
-                      className="flex items-center gap-2 text-indigo-400 cursor-pointer hover:text-indigo-300 px-3 py-2 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 transition-colors"
-                    >
-                      <span className="text-xl">📸</span>
-                      Add Photo
-                    </label>
-                  </div>
-                  
-                  <button
-                    className="px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={handleShare}
-                    disabled={(!postText && !postImage) || isSharing}
-                  >
-                    {isSharing ? 'Posting...' : 'Share Post'}
-                  </button>
-                </div>
-              </div>
-            </div>
-            {/* Explorer Header */}
-            <div className="w-full max-w-6xl mx-auto px-4 mb-6">
-              <h2 className="text-2xl font-bold text-white">Explore</h2>
-              <p className="text-gray-400">Discover beautiful moments from around the world</p>
-            </div>
-            {/* Posts Gallery */}
-            <div className="w-full max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {posts.map((post, idx) => (
-                <div key={post.id} className="bg-[#242526] rounded-lg shadow-lg overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedPost({ ...post, idx })}>
-                  {post.image && (
-                    <img src={post.image} alt="Post" className="w-full h-60 object-cover" />
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      {post.user?.photoURL ? (
-                        <img src={post.user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                          {post.user?.displayName?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <span className="text-white font-medium">{post.user?.displayName}</span>
-                    </div>
-                    <div className="text-gray-200">{post.text}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Photo Modal for Like, Comment, Share */}
-            {selectedPost && (
-              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setSelectedPost(null)}>
-                <div className="bg-[#23272A] rounded-xl p-8 relative flex flex-col md:flex-row max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-                  {/* Photo Section */}
-                  <div className="md:w-3/5 flex items-center justify-center">
-                    <img src={selectedPost.image} alt="Post" className="max-h-[70vh] rounded-lg object-contain" />
-                  </div>
-                  {/* Content Section */}
-                  <div className="md:w-2/5 p-6 flex flex-col h-full max-h-[80vh] overflow-y-auto">
-                    {/* User Info */}
-                    <div className="flex items-center gap-3 mb-4">
-                      {selectedPost.user?.photoURL ? (
-                        <img src={selectedPost.user.photoURL} alt="Profile" className="w-10 h-10 rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                          {selectedPost.user?.displayName?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <div>
-                        <div className="text-white font-medium">{selectedPost.user?.displayName}</div>
-                        <div className="text-gray-400 text-xs">
-                          {/* Show date if available */}
-                          {selectedPost.createdAt?.toDate ? selectedPost.createdAt.toDate().toLocaleDateString() : ""}
-                        </div>
-                      </div>
-                    </div>
-                    {/* Caption */}
-                    <div className="mb-6 text-gray-200 text-lg font-semibold">{selectedPost.text}</div>
-                    {/* Interaction Stats */}
-                    <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
-                      <span>{selectedPost.likes?.length || 0} likes</span>
-                      <span>{selectedPost.comments?.length || 0} comments</span>
-                    </div>
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-4 mb-6 border-b border-gray-700 pb-4">
-                      <button 
-                        className={`flex items-center gap-2 ${
-                          selectedPost.likes?.includes(user.uid) ? 'text-pink-500' : 'text-pink-400 hover:text-pink-300'
-                        }`}
-                        onClick={() => handleLike(selectedPost.id)}
-                      >
-                        <span className="text-xl">♥</span> 
-                        {selectedPost.likes?.includes(user.uid) ? 'Liked' : 'Like'}
-                      </button>
-                      <button className="flex items-center gap-2 text-blue-400 hover:text-blue-300">
-                        <span className="text-xl">💬</span> Comment
-                      </button>
-                      <button
-                        className="flex items-center gap-2 text-green-400 hover:text-green-300"
-                        onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({
-                              title: 'Grouppy Post',
-                              text: selectedPost.text,
-                              url: window.location.href
-                            });
-                          } else {
-                            alert('Share not supported on this browser.');
-                          }
-                        }}
-                      >
-                        <span className="text-xl">↗</span> Share
-                      </button>
-                    </div>
-                    {/* Comments Section */}
-                    <div className="flex-1 overflow-y-auto mb-4">
-                      <h4 className="text-white font-medium mb-3">Comments</h4>
-                      {selectedPost.comments?.length > 0 ? (
-                        <div className="space-y-3">
-                          {selectedPost.comments.map((comment, idx) => (
-                            <div key={idx} className="flex gap-2">
-                              {comment.photoURL ? (
-                                <img src={comment.photoURL} alt="Profile" className="w-8 h-8 rounded-full flex-shrink-0" />
-                              ) : (
-                                <>
-                                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex-shrink-0">
-                                    {comment.user?.charAt(0) || "U"}
-                                  </div>
-                                </>
-                              )}
-                              <div className="bg-[#3A3B3C] p-2 rounded-lg flex-1">
-                                <div className="text-sm font-medium">{comment.user}</div>
-                                <div className="text-sm">{comment.text}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 text-sm">No comments yet. Be the first to comment!</div>
-                      )}
-                    </div>
-                    {/* Add Comment */}
-                    <div className="mt-auto">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Add a comment..."
-                          className="flex-1 bg-[#3A3B3C] rounded-lg px-3 py-2 text-white placeholder-gray-400 outline-none"
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                        />
-                        <button 
-                          className="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700"
-                          onClick={() => handleAddComment(selectedPost.id)}
-                        >
-                          Post
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Close Button */}
-                  <button
-                    className="absolute top-3 right-3 text-gray-400 hover:text-white text-2xl z-10"
-                    onClick={() => setSelectedPost(null)}
+          <AnimatePresence>
+            {openedPost && (
+              <motion.div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setOpenedPost(null)}
+              >
+                <motion.div
+                  className="bg-[#1a1b1d] rounded-xl shadow-2xl w-full max-w-6xl relative overflow-hidden"
+                  initial={{ scale: 0.85, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.85, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <motion.button
+                    className="absolute top-3 right-3 z-50 text-gray-300 hover:text-white text-3xl bg-black/50 rounded-full p-1 shadow-lg transition"
+                    whileHover={{ scale: 1.2, rotate: 90 }}
+                    onClick={() => setOpenedPost(null)}
                   >
                     &times;
-                  </button>
-                </div>
-              </div>
+                  </motion.button>
+                  <EnhancedPost post={openedPost} currentUser={user} />
+                </motion.div>
+              </motion.div>
             )}
-          </>
-        )}
-      </main>
-      {/* Right Sidebar */}
-      <aside className="w-80 bg-[#23272A] border-l border-gray-800 px-6 py-8 flex flex-col gap-8 min-h-screen">
-        {/* Upcoming Events */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-white">Upcoming events</h3>
-          <ul className="space-y-2">
-            {events.map((e, i) => (
-              <li key={i} className="bg-[#18191A] rounded p-2 flex flex-col">
-                <span className="font-semibold">{e.title}</span>
-                <span className="text-xs text-gray-400">{e.date}</span>
-              </li>
-            ))}
-          </ul>
+          </AnimatePresence>
         </div>
-        {/* Special Moments */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-white">Special Moments</h3>
-          <ul className="space-y-2">
-            {specialMoments.map((m, i) => (
-              <li key={i} className="bg-[#18191A] rounded p-2">
-                <div className="font-semibold">{m.title}</div>
-                <div className="text-xs text-gray-400">{m.date} - {m.desc}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* Group Memories */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-white">Group memories</h3>
-          <ul className="space-y-1">
-            {groupMemories.map((g, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-                <span>{g}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* Shared Moments */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-white">Shared moments</h3>
-          <ul className="space-y-1">
-            {sharedMoments.map((g, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-pink-400"></span>
-                <span>{g}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* Shared Experiences */}
-        <div>
-          <h3 className="text-lg font-bold mb-3 text-white">Shared experiences</h3>
-          <ul className="space-y-1">
-            {sharedExperiences.map((g, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-                <span>{g}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
+      </div>
     </div>
   );
 }
 
 function App() {
-  const [user, setUser] = useState(undefined);
+  const [user, setUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        const isOpAccount = userData.isOpAccount || false;
+        setUser({ ...firebaseUser, isOpAccount });
+      } else {
+        setUser(null);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -556,6 +139,7 @@ function App() {
 
   return (
     <Router>
+      <NavigationMenu user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <Routes>
         <Route
           path="/login"
@@ -563,16 +147,34 @@ function App() {
         />
         <Route
           path="/"
-          element={user ? <Home user={user} /> : <Navigate to="/login" replace />}
+          element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/profile"
           element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
         />
+        <Route
+          path="/profile/:id"
+          element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/manage-badges"
+          element={user && user.isOpAccount ? <BadgeManager /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/management"
+          element={user && user.isOpAccount ? <Management /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/create-post"
+          element={user ? <CreatePost user={user} /> : <Navigate to="/login" replace />}
+        />
       </Routes>
     </Router>
   );
 }
+
+
 
 const fetchMorePhotos = () => {
   if (photos.length >= 32) {
@@ -601,5 +203,87 @@ const fetchMorePhotos = () => {
     <ShareIcon className="w-5 h-5" /> Share
   </button>
 </div>
+
+function Sidebar({ onSelect, selected }) {
+  const [expanded, setExpanded] = useState(false);
+  const icons = [
+    { id: 'org', icon: <img src="/org-icon.svg" alt="Org" />, label: 'Sisyphus Ventures' },
+    { id: 'dashboard', icon: <img src="/dashboard-icon.svg" alt="Dashboard" />, label: 'Dashboard' },
+    { id: 'charts', icon: <img src="/charts-icon.svg" alt="Charts" />, label: 'All charts' },
+    { id: 'analytics', icon: <img src="/analytics-icon.svg" alt="Analytics" />, label: 'Analytics' },
+    // ...add more as needed
+  ];
+
+  return (
+    <div className="flex h-screen">
+      {/* Icon-only sidebar */}
+      <div className="flex flex-col items-center bg-white border-r w-16 py-4 space-y-2 shadow-lg">
+        {icons.map((item, idx) => (
+          <button
+            key={item.id}
+            className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition ${selected === item.id ? 'bg-gray-200' : ''}`}
+            onClick={() => { onSelect(item.id); setExpanded(true); }}
+            title={item.label}
+          >
+            {item.icon}
+          </button>
+        ))}
+        <div className="flex-1" />
+        {/* Profile */}
+        <div className="mb-2">
+          <img src="/profile.jpg" alt="Profile" className="w-10 h-10 rounded-full border" />
+        </div>
+        <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition">
+          <span className="text-2xl">+</span>
+        </button>
+      </div>
+      {/* Expanded sidebar */}
+      {expanded && (
+        <div className="w-64 bg-white border-r shadow-xl p-6 flex flex-col transition-all">
+          <div className="flex items-center mb-8">
+            <img src="/org-icon.svg" alt="Org" className="w-8 h-8 mr-3" />
+            <div>
+              <div className="font-bold">Sisyphus Ventures</div>
+              <div className="text-xs text-gray-500">untitledui.com/sisyphus</div>
+            </div>
+          </div>
+          <div className="mb-4 text-xs text-gray-400 font-semibold">DASHBOARD</div>
+          <nav className="flex flex-col gap-2 mb-6">
+            <button className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 font-medium">
+              <img src="/dashboard-icon.svg" alt="Dashboard" className="w-5 h-5" />
+              Summary
+            </button>
+            <button className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 font-medium">
+              <img src="/charts-icon.svg" alt="Charts" className="w-5 h-5" />
+              All charts
+            </button>
+            {/* ...more nav items */}
+          </nav>
+          <div className="mb-4 text-xs text-gray-400 font-semibold">ORGANIZATION</div>
+          <nav className="flex flex-col gap-2">
+            <button className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-700 font-medium">
+              <span className="w-5 h-5 inline-block">⚙️</span>
+              Settings
+            </button>
+            {/* ...more org items */}
+          </nav>
+          <div className="flex-1" />
+          {/* Profile quick view */}
+          <div className="flex items-center gap-3 mt-8 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
+            <img src="/profile.jpg" alt="Profile" className="w-8 h-8 rounded-full" />
+            <div>
+              <div className="font-medium text-gray-800">Frankie Sullivan</div>
+              <div className="text-xs text-gray-500">frankie@untitledui.com</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
+
 
 export default App;

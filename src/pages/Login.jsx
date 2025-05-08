@@ -3,6 +3,8 @@ import { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup } from "fireb
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { db } from "../firebase/firebase";
+import { setDoc, doc } from "firebase/firestore";
 
 function Login() {
   const [showVideo, setShowVideo] = useState(true);
@@ -14,33 +16,73 @@ function Login() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Add new imports
+ 
+  // Add to existing useState declarations
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginMethod, setLoginMethod] = useState(null);
+
+  // Update Google login handler
   const handleGoogleLogin = async () => {
+    setLoginMethod('google');
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      // Store user in Firestore
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        photoURL: result.user.photoURL,
+        provider: "google",
+        createdAt: new Date(),
+      }, { merge: true });
       navigate("/");
     } catch (error) {
+      console.error("Error saving user:", error);
       alert("Google login failed");
     }
   };
 
+  // Update Facebook login handler
   const handleFacebookLogin = async () => {
     const provider = new FacebookAuthProvider();
     provider.addScope('email');
     provider.addScope('public_profile');
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      // Store user in Firestore
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        provider: "facebook",
+        createdAt: new Date(),
+      }, { merge: true });
       navigate("/");
     } catch (error) {
+      console.error("Error saving user:", error);
       alert("Facebook login failed");
     }
   };
 
+  // Update email login handler
   const handleEmailLogin = async (email, password) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      // Store user in Firestore
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        provider: "email",
+        createdAt: new Date(),
+        displayName: "Anonymous", // Default name
+        photoURL: "/default-avatar.png" // Default avatar
+      }, { merge: true });
       navigate("/");
     } catch (error) {
+      console.error("Error saving user:", error);
       alert("Email login failed");
     }
   };
@@ -119,13 +161,29 @@ function Login() {
         </div>
 
         {/* Email login */}
+        {/* Remove the commented-out imports here */}
         <div className="w-full">
           <input 
             type="email" 
-            placeholder="Email address" 
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 mb-3 rounded-xl border-none bg-white/60 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 focus:outline-none"
           />
-          <button className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-lg transition-all">
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 mb-3 rounded-xl border-none bg-white/60 text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+          />
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              handleEmailLogin(email, password);
+            }}
+            className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+          >
             Continue with Email
           </button>
         </div>
