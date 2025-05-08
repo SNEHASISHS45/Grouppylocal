@@ -211,7 +211,7 @@ function Sidebar({ onSelect, selected }) {
     { id: 'dashboard', icon: <img src="/dashboard-icon.svg" alt="Dashboard" />, label: 'Dashboard' },
     { id: 'charts', icon: <img src="/charts-icon.svg" alt="Charts" />, label: 'All charts' },
     { id: 'analytics', icon: <img src="/analytics-icon.svg" alt="Analytics" />, label: 'Analytics' },
-    // ...add more as needed
+
   ];
 
   return (
