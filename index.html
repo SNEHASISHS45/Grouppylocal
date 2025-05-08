@@ -52,21 +52,19 @@
     <!-- Font Optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Add your specific font -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
     <!-- Preload Main Script -->
     <link rel="preload" as="script" href="/src/main.jsx" />
-    <head>
-      <!-- Inline critical CSS here -->
-      <style>
-        /* Example: minimal critical CSS for above-the-fold content */
-        body { margin: 0; font-family: 'Roboto', sans-serif; }
-        .min-h-screen { min-height: 100vh; }
-        /* Add more as needed */
-      </style>
-      <!-- Existing links and meta tags -->
+
+    <!-- Inline critical CSS here -->
+    <style>
+      body { margin: 0; font-family: 'Roboto', sans-serif; }
+      .min-h-screen { min-height: 100vh; }
+      /* Add more as needed */
+    </style>
   </head>
+  <body>
     <img src="/images/example.webp" alt="Example description of social groups" loading="lazy" style="display:none;" />
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
