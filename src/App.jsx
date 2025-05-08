@@ -1,7 +1,12 @@
-import { useEffect, useState, lazy, Suspense, useRef, Fragment } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase/firebase';
+import { lazy, Suspense } from 'react';
+import ResponsiveSidebar from './components/ResponsiveSidebar';
+import NavigationMenu from './components/NavigationMenu';
+import EnhancedPost from './components/EnhancedPost';
+import PhotoFeed from './components/PhotoFeed';
 import { 
   collection, 
   addDoc,
@@ -19,56 +24,19 @@ import {
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import InfiniteScroll from 'react-infinite-scroll-component';
+// REMOVE this duplicate import:
+// import { orderBy } from "firebase/firestore";
 import ShareIcon from '@mui/icons-material/Share';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import { FaEllipsisH, FaHeart, FaComment, FaShare, FaBookmark } from 'react-icons/fa';
-
-// Component imports
-import BadgeManager from './components/BadgeManager';
+import { useRef } from 'react';
+import { Fragment } from 'react';
+import BadgeManager from './components/BadgeManager'; // Add this line
 import Management from './pages/Management';
 import EnhancedModal from './components/EnhancedModal';
-import NavigationMenu from './components/NavigationMenu';
-import ResponsiveSidebar from './components/ResponsiveSidebar';
-import EnhancedPost from './components/EnhancedPost';
-import PhotoFeed from './components/PhotoFeed';
-import { 
-  collection, 
-  addDoc,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  getDoc,
-  getDocs,
-  orderBy
-} from "firebase/firestore";
-import { db } from './firebase/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
-import ResponsiveSidebar from './components/ResponsiveSidebar';
-import NavigationMenu from './components/NavigationMenu';
-import EnhancedPost from './components/EnhancedPost';
-import PhotoFeed from './components/PhotoFeed';
-import { 
-  collection, 
-  addDoc,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  getDoc,
-  getDocs,
-  orderBy
-} from "firebase/firestore";
-import { db } from './firebase/firebase';
-import { motion, AnimatePresence } from 'framer-motion';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import { FaEllipsisH, FaHeart, FaComment, FaShare, FaBookmark } from 'react-icons/fa';
+
+// Remove the duplicate PhotoFeed component definition here
 
 function Home({ user, searchQuery, setSearchQuery }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,32 +151,31 @@ function App() {
             path="/login"
             element={!user ? <Login /> : <Navigate to="/" replace />}
           />
-          <Route
-            path="/"
-            element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/profile"
-            element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/profile/:id"
-            element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
-          />
-          <Route
-            path="/manage-badges"
-            element={user && user.isOpAccount ? <BadgeManager /> : <Navigate to="/" replace />}
-          />
-          <Route
-            path="/management"
-            element={user && user.isOpAccount ? <Management /> : <Navigate to="/" replace />}
-          />
-          <Route
-            path="/create-post"
-            element={user ? <CreatePost user={user} /> : <Navigate to="/login" replace />}
-          />
-        </Routes>
-      </Suspense>
+        <Route
+          path="/"
+          element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile"
+          element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile/:id"
+          element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/manage-badges"
+          element={user && user.isOpAccount ? <BadgeManager /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/management"
+          element={user && user.isOpAccount ? <Management /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/create-post"
+          element={user ? <CreatePost user={user} /> : <Navigate to="/login" replace />}
+        />
+      </Routes>
     </Router>
   );
 }
