@@ -2,51 +2,64 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="/favicon.ico" type="image/png/ico">
-    <link rel="icon" type="image" href="/favicon" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="google-site-verification" content="tqtrAUhcqIr3Lmv3SgR9uB69pu3Y3g_biwa5c1SEkoA" />
+    
     <title>Grouppy - Social Groups, Connect, Share, Chat, Community Platform</title>
     <meta name="description" content="Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities. Join Grouppy to discover new friends, create group chats, and build your online community.">
     <meta name="keywords" content="Grouppy, social platform, groups, connect, share, chat, community, friends, group chat, online community, memories, discover, trending, social network">
     <meta name="author" content="Grouppy Team">
-    <!-- Canonical URL for SEO -->
-    <link rel="canonical" href="https://grouppy.netlify.app" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://grouppy.netlify.app/" />
+
+    <!-- Favicons -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <meta name="theme-color" content="#ffffff">
+
     <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grouppy.netlify.app/">
     <meta property="og:title" content="Grouppy - Social Groups, Connect, Share, Chat, Community Platform">
     <meta property="og:description" content="Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities.">
-    <meta property="og:image" content="/favicon">
-    <meta property="og:url" content="grouppy.netlify.app">
-    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://grouppy.netlify.app/favicon.ico">
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://grouppy.netlify.app/">
     <meta name="twitter:title" content="Grouppy - Social Groups, Connect, Share, Chat, Community Platform">
     <meta name="twitter:description" content="Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities.">
-    <meta name="twitter:image" content="/favicon">
+    <meta name="twitter:image" content="https://grouppy.netlify.app/favicon.ico">
+
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Grouppy",
-      "url": "grouppy.netlify.app",
-      "logo": "/favicon",
+      "url": "https://grouppy.netlify.app/",
+      "logo": "https://grouppy.netlify.app/favicon.ico",
       "description": "Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities.",
       "sameAs": [
-        "https://twitter.com/yourprofile",
-        "https://facebook.com/yourprofile"
+        "https://x.com/Snehasish_s",
+        "https://www.instagram.com/snehasishsarkar_/"
       ]
     }
     </script>
-    <!-- Robots -->
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <!-- Font Optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Example of a WebP image -->
-    <img src="/images/example.webp" alt="Description" loading="lazy">
+    <!-- Add your specific font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+    <!-- Preload Main Script -->
+    <link rel="preload" as="script" href="/src/main.jsx" />
   </head>
   <body>
+    <img src="/images/example.webp" alt="Example description of social groups" loading="lazy" style="display:none;" />
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
