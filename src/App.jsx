@@ -22,6 +22,9 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import ShareIcon from '@mui/icons-material/Share';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
+import { FaEllipsisH, FaHeart, FaComment, FaShare, FaBookmark } from 'react-icons/fa';
+
+// Component imports
 import BadgeManager from './components/BadgeManager';
 import Management from './pages/Management';
 import EnhancedModal from './components/EnhancedModal';
@@ -66,19 +69,6 @@ import {
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import InfiniteScroll from 'react-infinite-scroll-component';
-// REMOVE this duplicate import:
-// import { orderBy } from "firebase/firestore";
-import ShareIcon from '@mui/icons-material/Share';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import { useRef } from 'react';
-import { Fragment } from 'react';
-import BadgeManager from './components/BadgeManager'; // Add this line
-import Management from './pages/Management';
-import EnhancedModal from './components/EnhancedModal';
-import { FaEllipsisH, FaHeart, FaComment, FaShare, FaBookmark } from 'react-icons/fa';
-
-// Remove the duplicate PhotoFeed component definition here
 
 function Home({ user, searchQuery, setSearchQuery }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
