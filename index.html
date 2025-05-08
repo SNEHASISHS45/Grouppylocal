@@ -57,13 +57,22 @@
     <!-- Preload Main Script -->
     <link rel="preload" as="script" href="/src/main.jsx" />
 
-    <!-- Inline critical CSS here -->
+    <!-- Preload critical assets -->
+    <link rel="preload" as="style" href="/assets/index-CiC0QU2U.css">
+    <link rel="preload" as="script" href="/assets/index-CiC0QU2U.js">
+    
+    <!-- Preconnect to required origins -->
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    
+    <!-- Inline critical CSS -->
     <style>
       body { margin: 0; font-family: 'Roboto', sans-serif; }
       .min-h-screen { min-height: 100vh; }
-      /* Add more as needed */
+      .loaded { opacity: 1; transition: opacity 0.3s ease-in; }
+      /* Add more critical CSS as needed */
     </style>
-  </head>
+</head>
   <body>
     <img src="/images/example.webp" alt="Example description of social groups" loading="lazy" style="display:none;" />
     <div id="root"></div>

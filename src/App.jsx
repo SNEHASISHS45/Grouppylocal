@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { useEffect, useState, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase/firebase';
-import Login from './pages/Login';
-import Profile from './components/Profile';
+import { 
+  collection, 
+  getDoc,
+  getDocs,
+  doc 
+} from "firebase/firestore";
+import { db } from './firebase/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
 import ResponsiveSidebar from './components/ResponsiveSidebar';
 import NavigationMenu from './components/NavigationMenu';
 import EnhancedPost from './components/EnhancedPost';
 import PhotoFeed from './components/PhotoFeed';
-import CreatePost from './pages/CreatePost'; // Add this import
 import { 
   collection, 
   addDoc,
@@ -21,7 +26,7 @@ import {
   arrayRemove,
   getDoc,
   getDocs,
-  orderBy // <-- keep this one
+  orderBy
 } from "firebase/firestore";
 import { db } from './firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -115,6 +120,13 @@ function Home({ user, searchQuery, setSearchQuery }) {
   );
 }
 
+// Lazy load components
+const Login = lazy(() => import('./pages/Login'));
+const Profile = lazy(() => import('./components/Profile'));
+const CreatePost = lazy(() => import('./pages/CreatePost'));
+const Management = lazy(() => import('./pages/Management'));
+const BadgeManager = lazy(() => import('./components/BadgeManager'));
+
 function App() {
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,36 +152,38 @@ function App() {
   return (
     <Router>
       <NavigationMenu user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-      <Routes>
-        <Route
-          path="/login"
-          element={!user ? <Login /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/"
-          element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/profile"
-          element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/profile/:id"
-          element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/manage-badges"
-          element={user && user.isOpAccount ? <BadgeManager /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/management"
-          element={user && user.isOpAccount ? <Management /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/create-post"
-          element={user ? <CreatePost user={user} /> : <Navigate to="/login" replace />}
-        />
-      </Routes>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route
+            path="/login"
+            element={!user ? <Login /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/"
+            element={user ? <Home user={user} searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/profile"
+            element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/profile/:id"
+            element={user ? <Profile user={user} /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/manage-badges"
+            element={user && user.isOpAccount ? <BadgeManager /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/management"
+            element={user && user.isOpAccount ? <Management /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/create-post"
+            element={user ? <CreatePost user={user} /> : <Navigate to="/login" replace />}
+          />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
