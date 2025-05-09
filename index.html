@@ -43,19 +43,39 @@
 
     <!-- Structured Data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Grouppy",
-      "url": "https://grouppy.netlify.app/",
-      "logo": "https://grouppy.netlify.app/favicon.ico",
-      "description": "Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities.",
-      "sameAs": [
-        "https://x.com/Snehasish_s",
-        "https://www.instagram.com/snehasishsarkar_/"
-      ]
-    }
-    </script>
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "Grouppy",
+            "url": "https://grouppy.netlify.app/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://grouppy.netlify.app/favicon.ico"
+            },
+            "description": "Grouppy is a leading social platform to connect, chat, share, and explore memories with your favorite groups and communities.",
+            "sameAs": [
+              "https://x.com/Snehasish_s",
+              "https://www.instagram.com/snehasishsarkar_/"
+            ]
+          },
+          {
+            "@type": "Organization",
+            "name": "Grouppy",
+            "url": "https://grouppy.netlify.app/",
+            "logo": "https://grouppy.netlify.app/favicon.ico",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+1-000-000-0000",
+              "contactType": "Customer Support",
+              "availableLanguage": ["English"]
+            }
+          }
+        ]
+      }
+      </script>
+      
 
     <!-- Font Optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
